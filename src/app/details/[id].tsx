@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 
 // DATABASE
 import { useGoalRepository } from '@/database/useGoalRepository';
+import { useTransationRepository } from '@/database/useTransactionRepository';
 
 // COMPONENTS
 import { Input } from '@/components/Input';
@@ -43,7 +44,8 @@ export default function Details() {
   const goalId = Number(routeParams.id);
 
   // DATABASE
-  const useGoals = useGoalRepository();
+  const useGoal = useGoalRepository();
+  const useTransation = useTransationRepository();
 
   // BOTTOM SHEET
   const bottomSheetRef = useRef<Bottom>(null);
@@ -54,23 +56,26 @@ export default function Details() {
     try {
       if (goalId) {
         // const goal = mocks.goal;
-        const goal = useGoals.show(goalId);
-        const transactions = mocks.transactions;
+        const goal = useGoal.show(goalId);
+        // const transactions = mocks.transactions as unknown as TransactionProps[];
+        const transactions = (useTransation.findByGoal(goalId) as unknown as TransactionProps[]) ?? [];
 
         if (!goal || !transactions) {
           return router.back();
         }
 
-        setGoal({
+        const currentGoal = {
           name: goal.name,
           current: currencyFormat(goal.current),
           total: currencyFormat(goal.total),
           percentage: (goal.current / goal.total) * 100,
-          transactions: transactions.map((item) => ({
+          transactions: transactions.map((item: TransactionProps) => ({
             ...item,
             date: dayjs(item.created_at).format('DD/MM/YYYY [às] HH:mm'),
           })),
-        });
+        };
+
+        setGoal(currentGoal);
 
         setIsLoading(false);
       }
@@ -91,7 +96,7 @@ export default function Details() {
         amountAsNumber = amountAsNumber * -1;
       }
 
-      console.log({ goalId, amount: amountAsNumber });
+      useTransation.create({ goalId, amount: amountAsNumber });
 
       Alert.alert('Sucesso', 'Transação registrada!');
 
@@ -100,6 +105,8 @@ export default function Details() {
 
       setAmount('');
       setType('up');
+
+      fetchDetails();
     } catch (error) {
       console.log(error);
     }

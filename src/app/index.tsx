@@ -18,6 +18,7 @@ import { mocks } from '@/utils/mocks';
 
 // DATABASE
 import { useGoalRepository } from '@/database/useGoalRepository';
+import { useTransationRepository } from '@/database/useTransactionRepository';
 
 export default function Home() {
   // LISTS
@@ -30,6 +31,7 @@ export default function Home() {
 
   // DATABASE
   const useGoal = useGoalRepository();
+  const useTransition = useTransationRepository();
 
   // BOTTOM SHEET
   const bottomSheetRef = useRef<Bottom>(null);
@@ -56,6 +58,8 @@ export default function Home() {
 
       setName('');
       setTotal('');
+
+      fetchGoals();
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível cadastrar.');
       console.log(error);
@@ -74,7 +78,8 @@ export default function Home() {
 
   async function fetchTransactions() {
     try {
-      const response = mocks.transactions;
+      // const response = mocks.transactions;
+      const response = useTransition.findLatest();
 
       setTransactions(
         response.map((item) => ({
